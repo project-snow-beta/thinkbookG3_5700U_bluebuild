@@ -10,18 +10,10 @@ modules:
   - type: dnf
     install:
       packages:
-        - fprintd
-        - fprintd-pam
-        - libfprint
-        - fwupd
-        - power-profiles-daemon
-        - hunspell
-        - hunspell-en-US
+        # Only packages NOT already in Universal Blue base
         - hunspell-de
         - godot
-        - htop
-        - neofetch
-        - vim-enhanced
+        - fastfetch  # replaces neofetch
 
     remove:
       packages:
@@ -35,23 +27,17 @@ modules:
         repo:
           title: Flathub (system)
         install:
-          # Browser - Floorp as Flatpak (reliable)
           - one.ablaze.floorp
-          # Office Suite
           - org.onlyoffice.desktopeditors
-          # Gaming
           - com.valvesoftware.Steam
-          # Productivity
           - org.gnome.Calculator
           - org.gnome.Calendar
           - org.gnome.Contacts
           - org.gnome.clocks
-          # Utilities
           - org.gnome.FileRoller
           - com.github.tchx84.Flatseal
           - io.github.flattool.Warehouse
           - io.missioncenter.MissionCenter
-          # Media
           - org.videolan.VLC
           - org.gnome.Loupe
           - org.gnome.Evince
