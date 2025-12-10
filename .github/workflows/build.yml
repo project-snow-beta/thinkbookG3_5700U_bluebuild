@@ -1,0 +1,71 @@
+name: bluebuild
+on:
+  schedule:
+    # Build daily at 17:20 UTC (20 minutes after Universal Blue images start building)
+    - cron: "20 17 * * *"
+  push:
+    paths-ignore:
+      - "**.md"
+      - ".gitignore"
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      build_iso:
+        description: 'Build ISO after image build'
+        required: false
+        default: 'false'
+        type: boolean
+
+env:
+  IMAGE_REGISTRY: ghcr.io/${{ github.repository_owner }}
+
+jobs:
+  bluebuild:
+    name: Build Custom Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix:
+        recipe:
+          - recipe.yml
+    steps:
+      - name: Build Custom Image
+        uses: blue-build/github-action@v1
+        with:
+          recipe: ${{ matrix.recipe }}
+          cosign_private_key: ${{ secrets.SIGNING_SECRET }}
+          registry_token: ${{ github.token }}
+          pr_event_number: ${{ github.event.number }}
+
+  # Optional ISO build job - runs on manual trigger or when build_iso is true
+  build-iso:
+    name: Build ISO
+    needs: bluebuild
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.build_iso == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install BlueBuild CLI
+        run: |
+          bash <(curl -s https://raw.githubusercontent.com/blue-build/cli/main/install.sh)
+
+      - name: Generate ISO
+        run: |
+          sudo bluebuild generate-iso \
+            --iso-name thinkbook-office.iso \
+            image ${{ env.IMAGE_REGISTRY }}/thinkbook-office:latest
+
+      - name: Upload ISO as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: thinkbook-office-iso
+          path: thinkbook-office.iso
+          retention-days: 7
