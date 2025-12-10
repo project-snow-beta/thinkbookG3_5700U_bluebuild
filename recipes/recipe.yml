@@ -1,107 +1,64 @@
 # yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
 ---
-# ThinkBook T14 ACL G3 (Ryzen 5700U) Office Productivity Image
-# Based on Fedora Kinoite 43 via Universal Blue
-
-name: thinkbook-office
+name: thinkbook-testimg
 description: Office productivity image for Lenovo ThinkBook T14 ACL G3 with Ryzen 5700U
 
-# Universal Blue Kinoite base (recommended over raw Fedora for hardware support, codecs, etc.)
 base-image: ghcr.io/ublue-os/kinoite-main
 image-version: 43
 
 modules:
-  # ============================================
-  # System Packages via DNF
-  # ============================================
   - type: dnf
-    repos:
-      # Floorp browser from COPR
-      copr:
-        - userdocs/Floorp
-
     install:
       packages:
-        # Fingerprint support (T14 has Synaptics sensor, works OOTB on Fedora 43)
         - fprintd
         - fprintd-pam
         - libfprint
-
-        # Firmware update support
         - fwupd
-
-        # Power management for AMD laptops
         - power-profiles-daemon
-
-        # Floorp browser (Firefox-based, privacy focused)
-        - floorp
-
-        # Basic office tools (non-Flatpak)
         - hunspell
         - hunspell-en-US
         - hunspell-de
-
-        # Development/Testing tools requested
         - godot
-
-        # System utilities
         - htop
         - neofetch
         - vim-enhanced
 
     remove:
       packages:
-        # Remove Firefox since we're using Floorp
         - firefox
         - firefox-langpacks
 
-  # ============================================
-  # Flatpak Applications (installed on first boot)
-  # ============================================
   - type: default-flatpaks
     configurations:
-      # System-wide Flatpaks (shared across users)
       - scope: system
         notify: true
         repo:
           title: Flathub (system)
         install:
-          # Office Suite - OnlyOffice as requested (not LibreOffice)
+          # Browser - Floorp as Flatpak (reliable)
+          - one.ablaze.floorp
+          # Office Suite
           - org.onlyoffice.desktopeditors
-
-          # Gaming - Steam as requested
+          # Gaming
           - com.valvesoftware.Steam
-
-          # Productivity tools
+          # Productivity
           - org.gnome.Calculator
           - org.gnome.Calendar
           - org.gnome.Contacts
           - org.gnome.clocks
-
-          # File management
+          # Utilities
           - org.gnome.FileRoller
           - com.github.tchx84.Flatseal
           - io.github.flattool.Warehouse
-
+          - io.missioncenter.MissionCenter
           # Media
           - org.videolan.VLC
           - org.gnome.Loupe
-
-          # System monitoring
-          - io.missioncenter.MissionCenter
-
-          # PDF viewer
           - org.gnome.Evince
-
-          # Note taking
           - org.gnome.Notes
 
-      # User-scope Flathub remote (for user-installed apps)
       - scope: user
         repo:
           title: Flathub (user)
 
-  # ============================================
-  # Signing (required for secure updates)
-  # ============================================
   - type: signing
