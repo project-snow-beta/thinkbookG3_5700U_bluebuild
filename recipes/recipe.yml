@@ -1,25 +1,48 @@
 # yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
 ---
-name: thinkbook-testimg
-description: Office productivity image for Lenovo ThinkBook T14 ACL G3 with Ryzen 5700U
+# Customize these for your specific laptop
+name: your-image-name
+description: Custom Fedora Kinoite for Lenovo [YOUR MODEL] with Ryzen [YOUR CPU]
 
+# Universal Blue Kinoite base - recommended over raw Fedora
+# Includes: hardware support, codecs, distrobox, better drivers
 base-image: ghcr.io/ublue-os/kinoite-main
 image-version: 43
 
 modules:
+  # ============================================
+  # System Packages via DNF
+  # ============================================
   - type: dnf
     install:
       packages:
-        # Only packages NOT already in Universal Blue base
-        - hunspell-de
-        - godot
-        - fastfetch  # replaces neofetch
+        # Add ONLY packages not already in Universal Blue base
+        # Common additions:
+        - hunspell-de           # German dictionary (change for your language)
+        - fastfetch             # System info (neofetch replacement)
+        # - godot               # Game engine (if needed)
+        
+        # Laptop-specific (uncomment if needed):
+        # - throttled           # ThinkPad thermal management
+        # - tlp                 # Advanced power management (conflicts with power-profiles-daemon)
 
     remove:
       packages:
         - firefox
         - firefox-langpacks
 
+  # ============================================
+  # Guest User Account
+  # Creates a passwordless guest account for kiosk/shared use
+  # ============================================
+  - type: script
+    scripts:
+      - create-guest-user.sh
+
+  # ============================================
+  # Flatpak Applications
+  # Installed on FIRST BOOT, not in image
+  # ============================================
   - type: default-flatpaks
     configurations:
       - scope: system
@@ -27,24 +50,51 @@ modules:
         repo:
           title: Flathub (system)
         install:
-          - one.ablaze.floorp
-          - org.onlyoffice.desktopeditors
-          - com.valvesoftware.Steam
+          # Browser - Chromium with privacy extensions (uBlock Origin + Privacy Badger)
+          # Extensions auto-installed via managed policy (see configure-chromium.sh)
+          - org.chromium.Chromium
+          
+          # Office - choose one:
+          - org.onlyoffice.desktopeditors  # MS Office compatible
+          # - org.libreoffice.LibreOffice  # If you prefer LibreOffice
+          
+          # Essentials
+          - com.github.tchx84.Flatseal     # Flatpak permissions manager
+          - io.github.flattool.Warehouse   # Flatpak manager
+          - io.missioncenter.MissionCenter # System monitor
+          
+          # Media
+          - org.videolan.VLC
+          - org.gnome.Loupe                # Image viewer
+          - org.gnome.Evince               # PDF viewer
+          
+          # Utilities
           - org.gnome.Calculator
           - org.gnome.Calendar
-          - org.gnome.Contacts
           - org.gnome.clocks
-          - org.gnome.FileRoller
-          - com.github.tchx84.Flatseal
-          - io.github.flattool.Warehouse
-          - io.missioncenter.MissionCenter
-          - org.videolan.VLC
-          - org.gnome.Loupe
-          - org.gnome.Evince
-          - org.gnome.Notes
+          - org.gnome.FileRoller           # Archive manager
+          
+          # Optional - uncomment as needed:
+          # - com.valvesoftware.Steam      # Gaming
+          # - com.spotify.Client           # Music
+          # - com.discordapp.Discord       # Chat
+          # - org.gimp.GIMP                # Image editing
+          # - org.inkscape.Inkscape        # Vector graphics
+          # - com.obsproject.Studio        # Streaming/recording
 
       - scope: user
         repo:
           title: Flathub (user)
 
+  # ============================================
+  # Chromium Extension Policy & Default Browser
+  # Pre-installs uBlock Origin and Privacy Badger
+  # ============================================
+  - type: script
+    scripts:
+      - configure-chromium.sh
+
+  # ============================================
+  # Signing - REQUIRED
+  # ============================================
   - type: signing
